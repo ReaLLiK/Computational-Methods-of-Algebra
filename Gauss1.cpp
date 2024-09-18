@@ -6,15 +6,79 @@
 
 using namespace std;
 
-void OutputOfMatrix(vector<vector<double>> matrix)
+void CreateRandomMatrix(vector<vector<double>>& matrix, int SizeOfUnknown, int Accuracy)
+{
+	double input;
+	for(int i=0; i<matrix.size();++i)
+		for (int j=0; j<matrix.size() + SizeOfUnknown; ++j)
+		{
+			do {
+				input = rand();
+				matrix[i].push_back(input);
+			} while (abs(input) < 5 * pow(10, -Accuracy - 1));
+		}
+}
+
+void CreateOwnMatrix(vector<vector<double>>& matrix, int SizeOfUnknown, int Accuracy)
+{
+	double input;
+	cout << "Введите всю дополненую матрицу построчно(не менее заданной точности): \n";
+	for(int i=0; i<matrix.size(); ++i)
+		for (int j = 0; j < matrix.size() + SizeOfUnknown; ++j)
+		{
+			do {
+				cin >> input;
+			} while ((abs(input) < 5*pow(10, -Accuracy-1))&&(input!=0));
+			matrix[i].push_back(round(input*pow(10,Accuracy))/pow(10,Accuracy));
+		}
+}
+
+void CreateOwnFractionMatrix(vector<vector<double>>& matrix, int SizeOfUnknown, int Accuracy)
+{
+	double Numerator, Denominator;
+	cout << "Введите всю дополненую матрицу построчно, первым вводится числитель, затем знаменатель(не менее заданной точности): \n";
+	for (int i = 0; i < matrix.size(); ++i)
+		for (int j = 0; j < matrix.size() + SizeOfUnknown; ++j)
+		{
+				cin >> Numerator>>Denominator;
+			matrix[i].push_back(round(Numerator/Denominator * pow(10, Accuracy)) / pow(10, Accuracy));
+		}
+}
+
+void CreateOwnMatrixByFormula(vector<vector<double>>& matrix, int SizeOfUnknown, int Accuracy)   //   a=1/i+j-1
+{
+	for (double i = 0; i < matrix.size(); ++i)
+	{
+		for (double j = 0; j < matrix.size(); ++j)
+			matrix[i].push_back(round(1 / (i + 1 + j) * pow(10, Accuracy)) / pow(10, Accuracy));
+		if (i == 0)
+			matrix[i].push_back(1);
+		else
+			matrix[i].push_back(0);
+	}
+} 
+
+void OutputOfMatrixWithAccuracy(vector<vector<double>> matrix, int Accuracy)
 {
 	for (int i = 0; i < matrix.size(); ++i)
 	{
 		for (auto j : matrix[i])
 		{
-			cout <<setw(9)<< j << ' ';
+			cout <<setw(Accuracy+5)<<setprecision(Accuracy)<< j << ' ';
 		}
 		cout << '\n'<<'\n';
+	}
+}
+
+void OutputOfMatrixWithoutAccuracy(vector<vector<double>> matrix, int Accuracy)
+{
+	for (int i = 0; i < matrix.size(); ++i)
+	{
+		for (auto j : matrix[i])
+		{
+			cout << setw(9) << j << ' ';
+		}
+		cout << '\n' << '\n';
 	}
 }
 
@@ -60,45 +124,6 @@ void OutPutOfAnswerWithSwitches(vector<vector<double>> matrix, vector<int> switc
 		}
 		cout << "\n\n";
 	}
-}
-
-void CreateRandomMatrix(vector<vector<double>>& matrix, int SizeOfUnknown, int Accuracy)
-{
-	double input;
-	for(int i=0; i<matrix.size();++i)
-		for (int j=0; j<matrix.size() + SizeOfUnknown; ++j)
-		{
-			do {
-				input = rand();
-				matrix[i].push_back(input);
-			} while (abs(input) < 5 * pow(10, -Accuracy - 1));
-		}
-}
-
-void CreateOwnMatrix(vector<vector<double>>& matrix, int SizeOfUnknown, int Accuracy)
-{
-	double input;
-	cout << "Введите всю дополненую матрицу построчно(не менее заданной точности): \n";
-	for(int i=0; i<matrix.size(); ++i)
-		for (int j = 0; j < matrix.size() + SizeOfUnknown; ++j)
-		{
-			do {
-				cin >> input;
-			} while ((abs(input) < 5*pow(10, -Accuracy-1))&&(input!=0));
-			matrix[i].push_back(round(input*pow(10,Accuracy))/pow(10,Accuracy));
-		}
-}
-
-void CreateOwnFractionMatrix(vector<vector<double>>& matrix, int SizeOfUnknown, int Accuracy)
-{
-	double Numerator, Denominator;
-	cout << "Введите всю дополненую матрицу построчно, первым вводится числитель, затем знаменатель(не менее заданной точности): \n";
-	for (int i = 0; i < matrix.size(); ++i)
-		for (int j = 0; j < matrix.size() + SizeOfUnknown; ++j)
-		{
-				cin >> Numerator>>Denominator;
-			matrix[i].push_back(round(Numerator/Denominator * pow(10, Accuracy)) / pow(10, Accuracy));
-		}
 }
 
 void DirectMove(vector<vector<double>>& matrix, int steps, int Accuracy)
@@ -163,7 +188,7 @@ void DirectMoveOfGaussWithChoosingOfMainElementInLine(vector<vector<double>>& ma
 		DirectMoveOfGaussWithChoosingOfMainElementInLine(matrix, steps + 1, Accuracy, switches);
 }
 
-void DirectMoveOfGaussWithChoosingOfMainElementInMatrix(vector<vector<double>>& matrix, int steps, int Accuracy, vector<int>& switches)
+void DirectMoveOfGaussWithChoosingOfMainElementInMatrix(vector<vector<double>>& matrix, int steps, int Accuracy, vector<int>& switches, double &Det)
 {
 	double max_element = 0;
 	pair<int, int> max_element_position;
@@ -185,9 +210,10 @@ void DirectMoveOfGaussWithChoosingOfMainElementInMatrix(vector<vector<double>>& 
 	}
 	swap(switches[steps], switches[max_element_position.second]);
 	swap(matrix[max_element_position.first], matrix[steps]);
+	Det *= matrix[steps][steps];
 	DirectMove(matrix, steps, Accuracy);
 	if (steps < matrix.size() - 1)
-		DirectMoveOfGaussWithChoosingOfMainElementInMatrix(matrix, steps + 1, Accuracy, switches);
+		DirectMoveOfGaussWithChoosingOfMainElementInMatrix(matrix, steps + 1, Accuracy, switches, Det);
 }
 
 void ReverseMoveOfGauss(vector<vector<double>> &matrix, int steps, int Accuracy)
@@ -229,15 +255,16 @@ void GaussWithChoosingMainElementInLine(vector<vector<double>>& matrix, int Accu
 	OutPutOfAnswerWithSwitches(matrix, switches);
 }
 
-void GaussWithChoosingMainElementInMatrix(vector<vector<double>>& matrix, int Accuracy)
+void GaussWithChoosingMainElementInMatrix(vector<vector<double>>& matrix, int Accuracy, double &Det)
 {
 	vector<int> switches(matrix.size());
 	for (int i = 0; i < switches.size(); ++i)
 		switches[i] = i;
-	DirectMoveOfGaussWithChoosingOfMainElementInMatrix(matrix, 0, Accuracy, switches);
+	DirectMoveOfGaussWithChoosingOfMainElementInMatrix(matrix, 0, Accuracy, switches, Det);
 	ReverseMoveOfGauss(matrix, matrix.size() - 1, Accuracy);
 	cout << "Полученный результат(Метод Гаусса с выбором главного элемента в Матрице):\n\n";
 	OutPutOfAnswerWithSwitches(matrix, switches);
+	cout << '\n' <<setprecision(Accuracy)<< "Определитель матрицы: \n" << Det<<'\n';
 }
 
 int main()
@@ -248,20 +275,20 @@ int main()
 	do {
 		cout << "Введите размеры матрицы: \n";
 	cin >> SizeOfMatrix;
-	} while ((SizeOfMatrix < 1) || (SizeOfMatrix > 9));
+	} while (SizeOfMatrix < 1);
 	matrix.resize(SizeOfMatrix);
 	do {
 		cout << "Введите количество неизвестных\n";
 		cin >> SizeOfUnknown;
-	} while ((SizeOfUnknown < 1) || (SizeOfUnknown > 6));
+	} while (SizeOfUnknown < 1);
 	do {
-		cout << "Своя генерация или случайная?\n1-случайная генерация\n2-своя генерация\n3-своя генерация дробных чисел\n";
+		cout << "Своя генерация или случайная?\n1-случайная генерация\n2-своя генерация\n3-своя генерация дробных чисел\n4-генерация по формуле 1/(i+j-1)\n";
 		cin >> choice;
-	} while ((choice != 1) && (choice != 2)&&(choice!=3));
+	} while ((choice != 1) && (choice != 2)&&(choice!=3)&&(choice!=4));
 	do {
 		cout << "Введите количество знаков после запятой нужной Вам точности: \n";
 		cin >> Accuracy;
-	} while (Accuracy < 0);
+	} while ((Accuracy < 0)||(Accuracy>50));
 	if (choice == 1)
 	{
 		srand(time(0));
@@ -275,14 +302,19 @@ int main()
 	{
 		CreateOwnFractionMatrix(matrix, SizeOfUnknown, Accuracy);
 	}
+	if (choice == 4)
+	{
+		CreateOwnMatrixByFormula(matrix, SizeOfUnknown, Accuracy);
+	}
 	cout << "Изначальная матрица:\n\n";
-	OutputOfMatrix(matrix);
+	OutputOfMatrixWithoutAccuracy(matrix, Accuracy);
+	double Det = 1;
 	vector<vector<double>> matrix2=matrix;
 	vector<vector<double>> matrix3=matrix;
 	vector<vector<double>> matrix4=matrix;
 	GaussWithoutChoosingMainElement(matrix, Accuracy);
 	GaussWithChoosingMainElementInColumn(matrix2, Accuracy);
 	GaussWithChoosingMainElementInLine(matrix3, Accuracy);
-	GaussWithChoosingMainElementInMatrix(matrix4, Accuracy);
+	GaussWithChoosingMainElementInMatrix(matrix4, Accuracy, Det);
 	return 0;
 }
