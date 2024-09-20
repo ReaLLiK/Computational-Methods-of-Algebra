@@ -6,17 +6,47 @@
 
 using namespace std;
 
-void CreateRandomMatrix(vector<vector<double>>& matrix, int SizeOfUnknown, int Accuracy)
+void CreateRandomMatrix(vector<vector<double>>& matrix, int SizeOfUnknown)
 {
 	double input;
 	for(int i=0; i<matrix.size();++i)
 		for (int j=0; j<matrix.size() + SizeOfUnknown; ++j)
 		{
-			do {
 				input = rand();
 				matrix[i].push_back(input);
-			} while (abs(input) < 5 * pow(10, -Accuracy - 1));
 		}
+}
+
+void CreateRandomMatrixWithDiagonalDominance(vector<vector<double>>& matrix, int SizeOfUnknown)
+{
+	double input;
+	for (int i = 0; i < matrix.size(); ++i)
+	{
+		for (int j = 0; j < matrix.size() + SizeOfUnknown; ++j)
+		{
+			input = rand();
+			matrix[i].push_back(input);
+		}
+		for (int j = 0; j < matrix.size(); ++j)
+			if (i != j)
+				matrix[i][i] += matrix[i][j];
+	}
+}
+
+void CreateRandomMatrixWithDiagonalDominanceDividedBy100(vector<vector<double>>& matrix, int SizeOfUnknown)
+{
+	double input;
+	for (int i = 0; i < matrix.size(); ++i)
+	{
+		for (int j = 0; j < matrix.size() + SizeOfUnknown; ++j)
+		{
+			input = rand();
+			matrix[i].push_back(input/100);
+		}
+		for (int j = 0; j < matrix.size(); ++j)
+			if (i != j)
+				matrix[i][i] += matrix[i][j];
+	}
 }
 
 void CreateOwnMatrix(vector<vector<double>>& matrix, int SizeOfUnknown, int Accuracy)
@@ -49,12 +79,20 @@ void CreateOwnMatrixByFormula(vector<vector<double>>& matrix, int SizeOfUnknown,
 {
 	for (double i = 0; i < matrix.size(); ++i)
 	{
-		for (double j = 0; j < matrix.size(); ++j)
+		for (double j = 0; j < matrix.size() + SizeOfUnknown; ++j)
+		{
+			if(j<matrix.size())
 			matrix[i].push_back(round(1 / (i + 1 + j) * pow(10, Accuracy)) / pow(10, Accuracy));
-		if (i == 0)
-			matrix[i].push_back(1);
-		else
-			matrix[i].push_back(0);
+			else
+			{
+				if (j == matrix.size() + i)
+				{
+					matrix[i].push_back(1);
+				}
+				else
+					matrix[i].push_back(0);
+			}
+		}
 	}
 } 
 
@@ -140,14 +178,14 @@ void DirectMove(vector<vector<double>>& matrix, int steps, int Accuracy)
 		}
 }
 
-void DirectMoveOfGaussWithoutChoosingOfMainElement(vector<vector<double>> &matrix, int steps, int Accuracy)
+void DirectMoveOfGaussWithoutChoosingOfMainElement(vector<vector<double>> &matrix, int steps, int Accuracy, double &Det)
 {
 	DirectMove(matrix, steps, Accuracy);
 	if(steps<matrix.size()-1)
-	DirectMoveOfGaussWithoutChoosingOfMainElement(matrix, steps + 1, Accuracy);
+	DirectMoveOfGaussWithoutChoosingOfMainElement(matrix, steps + 1, Accuracy, Det);
 }
 
-void DirectMoveOfGaussWithChoosingOfMainElementInColumn(vector<vector<double>>& matrix, int steps, int Accuracy)
+void DirectMoveOfGaussWithChoosingOfMainElementInColumn(vector<vector<double>>& matrix, int steps, int Accuracy, double &Det)
 {
 	double max_element = 0;
 	int max_element_position = steps;
@@ -160,13 +198,13 @@ void DirectMoveOfGaussWithChoosingOfMainElementInColumn(vector<vector<double>>& 
 		}
 	}
 	swap(matrix[max_element_position], matrix[steps]);
-
+	Det *= matrix[steps][steps];
 	DirectMove(matrix, steps, Accuracy);
 	if (steps < matrix.size() - 1)
-		DirectMoveOfGaussWithChoosingOfMainElementInColumn(matrix, steps + 1, Accuracy);
+		DirectMoveOfGaussWithChoosingOfMainElementInColumn(matrix, steps + 1, Accuracy, Det);
 }
 
-void DirectMoveOfGaussWithChoosingOfMainElementInLine(vector<vector<double>>& matrix, int steps, int Accuracy, vector<int>&switches)
+void DirectMoveOfGaussWithChoosingOfMainElementInLine(vector<vector<double>>& matrix, int steps, int Accuracy, vector<int>&switches, double &Det)
 {
 	double max_element = 0;
 	int max_element_position = steps;
@@ -183,9 +221,10 @@ void DirectMoveOfGaussWithChoosingOfMainElementInLine(vector<vector<double>>& ma
 		swap(matrix[k][steps], matrix[k][max_element_position]);
 	}
 	swap(switches[steps], switches[max_element_position]);
+	Det *= matrix[steps][steps];
 	DirectMove(matrix, steps, Accuracy);
 	if (steps < matrix.size() - 1)
-		DirectMoveOfGaussWithChoosingOfMainElementInLine(matrix, steps + 1, Accuracy, switches);
+		DirectMoveOfGaussWithChoosingOfMainElementInLine(matrix, steps + 1, Accuracy, switches, Det);
 }
 
 void DirectMoveOfGaussWithChoosingOfMainElementInMatrix(vector<vector<double>>& matrix, int steps, int Accuracy, vector<int>& switches, double &Det)
@@ -230,33 +269,40 @@ void ReverseMoveOfGauss(vector<vector<double>> &matrix, int steps, int Accuracy)
 
 void GaussWithoutChoosingMainElement(vector<vector<double>>& matrix, int Accuracy)
 {
-	DirectMoveOfGaussWithoutChoosingOfMainElement(matrix, 0, Accuracy);
+	double Det = 1;
+	DirectMoveOfGaussWithoutChoosingOfMainElement(matrix, 0, Accuracy, Det);
 	ReverseMoveOfGauss(matrix, matrix.size() - 1, Accuracy);
 	cout << "Полученный матрица(Метод Гаусса без выбора главного элемента):\n\n";
 	OutPutOfAnswer(matrix);
+	cout << '\n' << setprecision(Accuracy) << "Определитель матрицы: \n" << Det << '\n'<<'\n';
 }
 
 void GaussWithChoosingMainElementInColumn(vector<vector<double>>& matrix, int Accuracy)
 {
-	DirectMoveOfGaussWithChoosingOfMainElementInColumn(matrix, 0, Accuracy);
+	double Det = 1;
+	DirectMoveOfGaussWithChoosingOfMainElementInColumn(matrix, 0, Accuracy, Det);
 	ReverseMoveOfGauss(matrix, matrix.size() - 1, Accuracy);
 	cout << "Полученный результат(Метод Гаусса с выбором главного элемента в столбце):\n\n";
 	OutPutOfAnswer(matrix);
+	cout << '\n' << setprecision(Accuracy) << "Определитель матрицы: \n" << Det << '\n'<<'\n';
 }
 
 void GaussWithChoosingMainElementInLine(vector<vector<double>>& matrix, int Accuracy)
 {
+	double Det = 1;
 	vector<int> switches(matrix.size());
 	for (int i = 0; i < switches.size(); ++i)
 		switches[i]=i;
-	DirectMoveOfGaussWithChoosingOfMainElementInLine(matrix, 0, Accuracy, switches);
+	DirectMoveOfGaussWithChoosingOfMainElementInLine(matrix, 0, Accuracy, switches, Det);
 	ReverseMoveOfGauss(matrix, matrix.size() - 1, Accuracy);
 	cout << "Полученный результат(Метод Гаусса с выбором главного элемента в строке):\n\n";
 	OutPutOfAnswerWithSwitches(matrix, switches);
+	cout << '\n' << setprecision(Accuracy) << "Определитель матрицы: \n" << Det << '\n'<<'\n';
 }
 
-void GaussWithChoosingMainElementInMatrix(vector<vector<double>>& matrix, int Accuracy, double &Det)
+void GaussWithChoosingMainElementInMatrix(vector<vector<double>>& matrix, int Accuracy)
 {
+	double Det = 1;
 	vector<int> switches(matrix.size());
 	for (int i = 0; i < switches.size(); ++i)
 		switches[i] = i;
@@ -264,7 +310,7 @@ void GaussWithChoosingMainElementInMatrix(vector<vector<double>>& matrix, int Ac
 	ReverseMoveOfGauss(matrix, matrix.size() - 1, Accuracy);
 	cout << "Полученный результат(Метод Гаусса с выбором главного элемента в Матрице):\n\n";
 	OutPutOfAnswerWithSwitches(matrix, switches);
-	cout << '\n' <<setprecision(Accuracy)<< "Определитель матрицы: \n" << Det<<'\n';
+	cout << '\n' <<setprecision(Accuracy)<< "Определитель матрицы: \n" << Det<<'\n'<<'\n';
 }
 
 int main()
@@ -282,17 +328,17 @@ int main()
 		cin >> SizeOfUnknown;
 	} while (SizeOfUnknown < 1);
 	do {
-		cout << "Своя генерация или случайная?\n1-случайная генерация\n2-своя генерация\n3-своя генерация дробных чисел\n4-генерация по формуле 1/(i+j-1)\n";
+		cout << "Своя генерация или случайная?\n1-случайная генерация\n2-своя генерация\n3-своя генерация дробных чисел\n4-генерация по формуле 1/(i+j-1)\n5-случайная генерация с диагональным доминированием\n6-случайная генерация с диагональным доминированием действительных чисел с 2 знаками после запятой\n";
 		cin >> choice;
-	} while ((choice != 1) && (choice != 2)&&(choice!=3)&&(choice!=4));
+	} while ((choice != 1) && (choice != 2)&&(choice!=3)&&(choice!=4)&&(choice!=5) && (choice != 6));
 	do {
 		cout << "Введите количество знаков после запятой нужной Вам точности: \n";
 		cin >> Accuracy;
-	} while ((Accuracy < 0)||(Accuracy>50));
+	} while ((Accuracy < 0)||(Accuracy>153));
 	if (choice == 1)
 	{
 		srand(time(0));
-		CreateRandomMatrix(matrix, SizeOfUnknown, Accuracy);
+		CreateRandomMatrix(matrix, SizeOfUnknown);
 	}
 	if (choice == 2)
 	{
@@ -306,15 +352,22 @@ int main()
 	{
 		CreateOwnMatrixByFormula(matrix, SizeOfUnknown, Accuracy);
 	}
-	cout << "Изначальная матрица:\n\n";
+	if (choice == 5)
+	{
+		CreateRandomMatrixWithDiagonalDominance(matrix, SizeOfUnknown);
+	}
+	if (choice == 6)
+	{
+		CreateRandomMatrixWithDiagonalDominanceDividedBy100(matrix, SizeOfUnknown);
+	}
+	cout << "\nИзначальная матрица:\n\n";
 	OutputOfMatrixWithoutAccuracy(matrix, Accuracy);
-	double Det = 1;
-	vector<vector<double>> matrix2=matrix;
-	vector<vector<double>> matrix3=matrix;
+	//vector<vector<double>> matrix2=matrix;
+	//vector<vector<double>> matrix3=matrix;
 	vector<vector<double>> matrix4=matrix;
-	GaussWithoutChoosingMainElement(matrix, Accuracy);
-	GaussWithChoosingMainElementInColumn(matrix2, Accuracy);
-	GaussWithChoosingMainElementInLine(matrix3, Accuracy);
-	GaussWithChoosingMainElementInMatrix(matrix4, Accuracy, Det);
+	//GaussWithoutChoosingMainElement(matrix, Accuracy);
+	//GaussWithChoosingMainElementInColumn(matrix2, Accuracy);
+	//GaussWithChoosingMainElementInLine(matrix3, Accuracy);
+	GaussWithChoosingMainElementInMatrix(matrix4, Accuracy);
 	return 0;
 }
