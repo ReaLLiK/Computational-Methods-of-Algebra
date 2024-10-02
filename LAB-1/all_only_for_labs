@@ -15,7 +15,6 @@ class ComputationalMethods
 	vector<vector<double>> Reverse; //обратная матрица
 	double Det;
 	vector<double> Unknown;
-	vector<vector<double>> answers;
 	vector<double> Answers; //Вектор решений
 	vector<int> switches;
 	vector<double> residual; //невязка
@@ -29,11 +28,13 @@ public:
 		Unknown.resize(SizeOfMatrix);
 		Answers.resize(SizeOfMatrix);
 		CreateRandomAnswers();
-		cout << "Вектор решений:\n";
+		cout << "Вектор решений:\n\n";
 		for (int i = 0; i < SizeOfMatrix; ++i)
 			cout << Answers[i] << '\n';
-		answers.resize(SizeOfMatrix);
+		cout << '\n';
 		switches.resize(SizeOfMatrix);
+		for (int i = 0; i < SizeOfMatrix; ++i)
+			switches[i] = i;
 		residual.resize(SizeOfMatrix);
 		Reverse.resize(SizeOfMatrix);
 		for (int i = 0; i < SizeOfMatrix; ++i)
@@ -127,11 +128,6 @@ public:
 
 	void OutPutOfAnswerWithSwitches()
 	{
-		for (int i = 0; i < matrix.size(); ++i)
-		{
-			for (int j = matrix.size(); j < matrix[0].size()-SizeOfMatrix; ++j)
-				answers[j - matrix.size()].push_back(matrix[i][j]);
-		}
 		int k = switches.size();
 		while (k)
 		{
@@ -139,20 +135,15 @@ public:
 			{
 				if (switches[i] != i)
 				{
-					for (int j = 0; j < answers.size(); ++j)
-						swap(answers[j][i], answers[j][switches[i]]);
+						swap(matrix[i], matrix[switches[i]]);	
 				}
 				swap(switches[i], switches[switches[i]]);
 			}
 			k /= 2;
 		}
-		for (int i = 0; i < answers[0].size(); ++i)
+		for (int i = 0; i < SizeOfMatrix; ++i)
 		{
-			for (int j = 0; j < answers.size(); ++j)
-			{
-				cout << "x[" << j + 1 << "][" << i + 1 << "] = " << answers[j][i] << "   ";
-			}
-			cout << "\n\n";
+				cout << "x[" << 1 << "][" << i + 1 << "] = " << matrix[i][SizeOfMatrix] << "\n\n";
 		}
 	}
 
@@ -164,14 +155,14 @@ public:
 			matrix[steps][j] = matrix[steps][j] / matrix[steps][steps];
 		}
 		for (int i = matrix[steps].size() - 1; i >= 0; --i)
-			for (int j = steps + 1; j < matrix.size(); ++j)
+			for (int j = steps + 1; j < SizeOfMatrix; ++j)
 				matrix[j][i] -= (matrix[steps][i] * matrix[j][steps]);
 	}
 
 	void DirectMoveOfGaussWithoutChoosingOfMainElement(int steps)
 	{
 		DirectMove(steps);
-		if (steps < matrix.size() - 1)
+		if (steps < SizeOfMatrix - 1)
 			DirectMoveOfGaussWithoutChoosingOfMainElement(steps + 1);
 	}
 
@@ -179,7 +170,7 @@ public:
 	{
 		double max_element = 0;
 		int max_element_position = steps;
-		for (int k = steps; k < matrix.size(); ++k)
+		for (int k = steps; k < SizeOfMatrix; ++k)
 		{
 			if (abs(matrix[k][steps]) > max_element)
 			{
@@ -189,7 +180,7 @@ public:
 		}
 		swap(matrix[max_element_position], matrix[steps]);
 		DirectMove(steps);
-		if (steps < matrix.size() - 1)
+		if (steps < SizeOfMatrix - 1)
 			DirectMoveOfGaussWithChoosingOfMainElementInColumn(steps + 1);
 	}
 
@@ -197,7 +188,7 @@ public:
 	{
 		double max_element = 0;
 		int max_element_position = steps;
-		for (int k = steps; k < matrix.size(); ++k)
+		for (int k = steps; k < SizeOfMatrix; ++k)
 		{
 			if (abs(matrix[steps][k]) > max_element)
 			{
@@ -205,13 +196,13 @@ public:
 				max_element_position = k;
 			}
 		}
-		for (int k = 0; k < matrix.size(); ++k)
+		for (int k = 0; k < SizeOfMatrix; ++k)
 		{
 			swap(matrix[k][steps], matrix[k][max_element_position]);
 		}
 		swap(switches[steps], switches[max_element_position]);
 		DirectMove(steps);
-		if (steps < matrix.size() - 1)
+		if (steps < SizeOfMatrix-1)
 			DirectMoveOfGaussWithChoosingOfMainElementInLine(steps + 1);
 	}
 
@@ -221,9 +212,9 @@ public:
 		pair<int, int> max_element_position;
 		max_element_position.first = steps;
 		max_element_position.second = steps;
-		for (int k = steps; k < matrix.size(); ++k)
+		for (int k = steps; k < SizeOfMatrix; ++k)
 		{
-			for (int l = steps; l < matrix.size(); ++l)
+			for (int l = steps; l < SizeOfMatrix; ++l)
 				if (abs(matrix[k][l]) > max_element)
 				{
 					max_element = matrix[k][l];
@@ -231,14 +222,14 @@ public:
 					max_element_position.second = l;
 				}
 		}
-		for (int k = 0; k < matrix.size(); ++k)
+		for (int k = 0; k < SizeOfMatrix; ++k)
 		{
 			swap(matrix[k][steps], matrix[k][max_element_position.second]);
 		}
 		swap(switches[steps], switches[max_element_position.second]);
 		swap(matrix[max_element_position.first], matrix[steps]);
 		DirectMove(steps);
-		if (steps < matrix.size() - 1)
+		if (steps < SizeOfMatrix-1)
 			DirectMoveOfGaussWithChoosingOfMainElementInMatrix(steps + 1);
 	}
 
@@ -254,7 +245,7 @@ public:
 	void GaussWithoutChoosingMainElement()
 	{
 		DirectMoveOfGaussWithoutChoosingOfMainElement(0);
-		ReverseMoveOfGauss(matrix.size() - 1);
+		ReverseMoveOfGauss(SizeOfMatrix-1);
 		cout << "Полученный результат(Метод Гаусса без выбора главного элемента):\n\n";
 		OutPutOfAnswer();
 		cout << '\n' << "Определитель матрицы: \n" << Det << '\n' << '\n';
@@ -263,7 +254,7 @@ public:
 	void GaussWithChoosingMainElementInColumn()
 	{
 		DirectMoveOfGaussWithChoosingOfMainElementInColumn(0);
-		ReverseMoveOfGauss(matrix.size() - 1);
+		ReverseMoveOfGauss(SizeOfMatrix - 1);
 		cout << "Полученный результат(Метод Гаусса с выбором главного элемента в столбце):\n\n";
 		OutPutOfAnswer();
 		cout << '\n'  << "Определитель матрицы: \n" << Det << '\n' << '\n';
@@ -271,11 +262,8 @@ public:
 
 	void GaussWithChoosingMainElementInLine()
 	{
-		vector<int> switches(matrix.size());
-		for (int i = 0; i < switches.size(); ++i)
-			switches[i] = i;
 		DirectMoveOfGaussWithChoosingOfMainElementInLine(0);
-		ReverseMoveOfGauss(matrix.size() - 1);
+		ReverseMoveOfGauss(SizeOfMatrix - 1);
 		cout << "Полученный результат(Метод Гаусса с выбором главного элемента в строке):\n\n";
 		OutPutOfAnswerWithSwitches();
 		cout << '\n' << "Определитель матрицы: \n" << Det << '\n' << '\n';
@@ -283,10 +271,8 @@ public:
 
 	void GaussWithChoosingMainElementInMatrix()
 	{
-		for (int i = 0; i < switches.size(); ++i)
-			switches[i] = i;
 		DirectMoveOfGaussWithChoosingOfMainElementInMatrix(0);
-		ReverseMoveOfGauss(matrix.size() - 1);
+		ReverseMoveOfGauss(SizeOfMatrix - 1);
 		cout << "Полученный результат(Метод Гаусса с выбором главного элемента в Матрице):\n\n";
 		OutPutOfAnswerWithSwitches();
 		cout << '\n'<< "Определитель матрицы: \n" << Det << '\n' << '\n';
@@ -294,12 +280,45 @@ public:
 
 	void CountResidual()
 	{
-		cout << "Вектор невязки:\n";
+		cout << "Вектор невязки:\n\n";
 		for (int i = 0; i < SizeOfMatrix; ++i)
 		{
 			residual[i] = matrix[i][SizeOfMatrix] - Answers[i];
 			cout << residual[i] << '\n';
 		}
 		cout << '\n';
+	}
+
+	void OutputOfReverse()
+	{
+		cout << "Обратная матрица:\n\n";
+		for (int i = 0; i < SizeOfMatrix; ++i)
+		{
+			for (int j = SizeOfMatrix + 1; j < 2 * SizeOfMatrix + 1; ++j)
+			{
+				cout<< matrix[i][j] << "  ";
+			}
+			cout << "\n\n";
+		}
+		cout << '\n';
+	}
+
+	void CheckReverse()
+	{
+		cout << "Произведение обратной матрицы на саму матрицу:\n\n";
+		for (int i = 0; i < SizeOfMatrix; ++i)
+			Reverse[i][i]--;
+		for(int i=0; i<SizeOfMatrix; ++i)
+			for (int j = 0; j < SizeOfMatrix; ++j)
+				for (int k = 0; k < SizeOfMatrix; ++k)
+				{
+					Reverse[i][j] += matrix2[i][k] * matrix[k][j+SizeOfMatrix+1];
+				}
+		for (int i = 0; i < SizeOfMatrix; ++i)
+		{
+			for (int j = 0; j < SizeOfMatrix; ++j)
+				cout <<setw(13)<< Reverse[i][j] << ' ';
+			cout << '\n';
+		}
 	}
 };
